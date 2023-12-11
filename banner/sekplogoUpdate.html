@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display Iframes</title>
+    
+</head>
+<body>
+
+    <div id="iframesContainer"></div>
+
+    <form id="updateUrlForm">
+        <label for="iframeUrlInput">Enter iframe URL:</label>
+        <input type="text" id="iframeUrlInput" name="iframeUrlInput" placeholder="Enter iframe URL">
+        <button type="button" id="updateUrlButton">Update URL</button>
+    </form>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            const iframesContainer = document.getElementById('iframesContainer');
+
+            try {
+                const responseStyles = await fetch('http://localhost:3000/api/styles/2'); 
+                const stylesData = await responseStyles.json();
+
+                const styleElement = document.createElement('style');
+                styleElement.innerHTML = stylesData.css_code;
+                document.head.appendChild(styleElement);
+
+                const response = await fetch('http://localhost:3000/api/iframes');
+                const data = await response.json();
+                const sekpaevItem = data.find(item => item.title === 'sekpaev');
+
+                if (sekpaevItem) {
+                    const iframe = document.createElement('iframe');
+                    iframe.id = 'myIframe';
+                    iframe.src = sekpaevItem.url;
+                    iframe.width = '100%';
+                    iframe.height = '100%';
+                    const title = document.createElement('h1');
+                    title.textContent = sekpaevItem.title;
+                    iframesContainer.appendChild(title);
+                    iframesContainer.appendChild(iframe);
+
+                    function updateIframeUrl() {
+                        const iframeUrlInput = document.getElementById('iframeUrlInput');
+                        const iframe = document.getElementById('myIframe');
+
+                        if (iframeUrlInput && iframe) {
+                            iframe.src = iframeUrlInput.value;
+                            fetch('http://localhost:3000/api/iframes', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json', 
+                                },
+                                body: JSON.stringify({
+                                    title: 'sekpaev',
+                                    url: iframeUrlInput.value,
+                                }),
+                            })
+                            .then(response => response.json())
+                            .then(data => console.log('URL обновлен в базе данных:', data))
+                            .catch(error => console.error('Ошибка обновления URL в базе данных:', error));
+                        }
+                    }
+                    document.getElementById('updateUrlButton').addEventListener('click', updateIframeUrl);
+                } else {
+                    console.error('Iframe with title "sekpaev" not found in the data.');
+                }
+            } catch (error) {
+                console.error('Error fetching or displaying data:', error);
+            }
+        });
+    </script>
+
+</body>
+</html>

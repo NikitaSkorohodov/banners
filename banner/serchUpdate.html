@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display Iframes</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <input type="text" id="searchInput" placeholder="Enter iframe title">
+    <button onclick="searchAndDisplay()">Search</button>
+
+    <div id="iframesContainer"></div>
+
+    <input type="text" id="updateInput" placeholder="Enter new URL">
+    <button onclick="updateIframe()">Update URL</button>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            // Загрузка стилей с id 2
+            try {
+                const responseStyles = await fetch('http://localhost:3000/api/styles/2'); // Используйте необходимый id
+                const stylesData = await responseStyles.json();
+
+                const styleElement = document.createElement('style');
+                styleElement.innerHTML = stylesData.css_code;
+                document.head.appendChild(styleElement);
+            } catch (error) {
+                console.error('Error fetching or displaying styles:', error);
+            }
+        });
+
+        async function searchAndDisplay() {
+            const iframesContainer = document.getElementById('iframesContainer');
+            const searchInput = document.getElementById('searchInput');
+            const searchTerm = searchInput.value.trim();
+
+            if (searchTerm === '') {
+                console.error('Please enter a search term.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/api/iframes');
+                const data = await response.json();
+                const foundItem = data.find(item => item.title === searchTerm);
+
+                if (foundItem) {
+                    while (iframesContainer.firstChild) {
+                        iframesContainer.removeChild(iframesContainer.firstChild);
+                    }
+
+                    const iframe = document.createElement('iframe');
+                    iframe.src = foundItem.url;
+                    iframe.width = '100%'; 
+                    iframe.height = '500px'; // Adjust the height as needed
+
+                    const title = document.createElement('h1');
+                    title.textContent = foundItem.title;
+
+                    // Append the new content
+                    iframesContainer.appendChild(title);
+                    iframesContainer.appendChild(iframe);
+                } else {
+                    console.error(`Iframe with title "${searchTerm}" not found in the data.`);
+                }
+            } catch (error) {
+                console.error('Error fetching or displaying data:', error);
+            }
+        }
+
+        async function updateIframe() {
+            const updateInput = document.getElementById('updateInput');
+            const newUrl = updateInput.value.trim();
+
+            if (newUrl === '') {
+                console.error('Please enter a new URL.');
+                return;
+            }
+
+            const searchInput = document.getElementById('searchInput');
+            const searchTerm = searchInput.value.trim();
+
+            if (searchTerm === '') {
+                console.error('Please enter a search term.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/api/iframes', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        title: searchTerm,
+                        url: newUrl,
+                    }),
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log(data);
+
+                if (data.success) {
+                    console.log(`URL for iframe "${searchTerm}" updated successfully to "${newUrl}".`);
+                    searchAndDisplay();
+                } else {
+                    console.error(`Error updating iframe URL: ${data.message}`);
+                }
+            } catch (error) {
+                console.error('Error updating iframe URL:', error);
+            }
+        }
+    </script>
+
+</body>
+</html>

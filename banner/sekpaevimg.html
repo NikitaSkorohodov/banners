@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Display Iframes</title>
+</head>
+<body>
+
+    <div id="iframesContainer"></div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            const iframesContainer = document.getElementById('iframesContainer');
+
+            try {
+                const responseStyles = await fetch('http://localhost:3000/api/styles/1'); 
+                const stylesData = await responseStyles.json();
+
+                const styleElement = document.createElement('style');
+                styleElement.innerHTML = stylesData.css_code;
+                document.head.appendChild(styleElement);
+
+                const responseIframes = await fetch('http://localhost:3000/api/iframes');
+                const data = await responseIframes.json();
+                const sekpaevItem = data.find(item => item.title === 'sekpaevimg');
+
+                if (sekpaevItem) {
+                    const iframe = document.createElement('iframe');
+                    iframe.src = sekpaevItem.url;
+                    iframe.width = '100%'; 
+                    iframe.height = '100%';
+                    const title = document.createElement('h1');
+                    title.textContent = sekpaevItem.title;
+                    iframesContainer.appendChild(title);
+                    iframesContainer.appendChild(iframe);
+                } else {
+                    console.error('Изображение "bilsekpaevimgljard" не найдено в данных.');
+                }
+            } catch (error) {
+                console.error('Ошибка при получении или отображении данных:', error);
+            }
+        });
+    </script>
+
+</body>
+</html>
